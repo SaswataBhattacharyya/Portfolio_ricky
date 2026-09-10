@@ -3,20 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>Webberick — Creative Designer & Developer</title>
+    <meta name="description" content="Webberick — creative designer & developer crafting animations, web experiences, and AI-powered products." />
+    <meta name="author" content="Webberick" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="Webberick — Creative Designer & Developer" />
+    <meta property="og:description" content="Webberick — creative designer & developer crafting animations, web experiences, and AI-powered products." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="/logo_dark.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:site" content="@Webberick" />
+    <meta name="twitter:image" content="/logo_dark.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/webberick-favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Theme before paint: apply the stored theme class immediately to avoid a first-paint flash. -->
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("portfolio-theme");
+          document.documentElement.classList.add(theme === "light" ? "light" : "dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
 
   <body>

@@ -1,0 +1,20 @@
+[Unit]
+Description=Webberick Django application
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=webberick
+Group=webberick
+WorkingDirectory=/srv/webberick/app/backend
+EnvironmentFile=/etc/webberick/webberick.env
+ExecStart=/srv/webberick/venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 1 --timeout 60 --access-logfile - --error-logfile -
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/srv/webberick/media /srv/webberick/imported-sites /srv/webberick/app/backend/staticfiles
+
+[Install]
+WantedBy=multi-user.target

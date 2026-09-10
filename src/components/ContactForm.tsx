@@ -1,26 +1,79 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, CheckCircle, User, Building, Clock, DollarSign, FileText } from "lucide-react";
+import {
+  Send,
+  CheckCircle,
+  User,
+  Building,
+  Clock,
+  DollarSign,
+  FileText,
+  Globe2,
+  Mail,
+  Phone,
+} from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 type ProjectType = "personal" | "company" | "";
 
 interface FormData {
   name: string;
+  email: string;
+  phone: string;
+  country: string;
   description: string;
   budget: string;
+  currency: string;
   duration: string;
   projectType: ProjectType;
 }
 
+const countries = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
+  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
+  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+  "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
+  "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
+  "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Cote d'Ivoire", "Costa Rica",
+  "Croatia", "Democratic Republic of the Congo",
+  "Cuba", "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+  "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini",
+  "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany",
+  "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti",
+  "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+  "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
+  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya",
+  "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives",
+  "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia",
+  "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia",
+  "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+  "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Panama", "Papua New Guinea",
+  "Palestine", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia",
+  "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa",
+  "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles",
+  "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa",
+  "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+  "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga",
+  "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
+  "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
+  "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe",
+];
+
 export function ContactForm() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
+    email: "",
+    phone: "",
+    country: "",
     description: "",
     budget: "",
+    currency: "USD",
     duration: "",
     projectType: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -29,22 +82,37 @@ export function ContactForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to a backend
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      await apiFetch("/submissions/", {
+        method: "POST",
+        body: JSON.stringify({ ...formData, website: "" }),
+      });
+      setIsSubmitted(true);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Message could not be sent. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setFormData({
       name: "",
+      email: "",
+      phone: "",
+      country: "",
       description: "",
       budget: "",
+      currency: "USD",
       duration: "",
       projectType: "",
     });
     setIsSubmitted(false);
+    setErrorMessage("");
   };
 
   return (
@@ -105,6 +173,67 @@ export function ContactForm() {
               />
             </div>
 
+            {/* Contact details */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Mail className="w-4 h-4 text-primary" />
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Phone className="w-4 h-4 text-primary" />
+                  Phone Number <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  autoComplete="tel"
+                  placeholder="+1 555 123 4567"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="country" className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Globe2 className="w-4 h-4 text-primary" />
+                Country
+              </label>
+              <select
+                id="country"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                required
+                autoComplete="country-name"
+                className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
+              >
+                <option value="">Select your country</option>
+                {countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Description field */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -122,27 +251,37 @@ export function ContactForm() {
               />
             </div>
 
-            {/* Budget and Duration */}
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* Budget and duration */}
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <label htmlFor="budget" className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <DollarSign className="w-4 h-4 text-primary" />
-                  Budget Range
+                  Budget
                 </label>
-                <select
-                  name="budget"
-                  value={formData.budget}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
-                >
-                  <option value="">Select budget</option>
-                  <option value="under-1k">Under $1,000</option>
-                  <option value="1k-5k">$1,000 - $5,000</option>
-                  <option value="5k-10k">$5,000 - $10,000</option>
-                  <option value="10k-25k">$10,000 - $25,000</option>
-                  <option value="25k+">$25,000+</option>
-                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    aria-label={`Switch currency to ${formData.currency === "USD" ? "Indian rupees" : "US dollars"}`}
+                    aria-pressed={formData.currency === "INR"}
+                    onClick={() => setFormData((prev) => ({ ...prev, currency: prev.currency === "USD" ? "INR" : "USD" }))}
+                    className="w-14 shrink-0 rounded-xl border border-border bg-secondary px-4 py-3 text-lg text-foreground outline-none transition-all hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    {formData.currency === "USD" ? "$" : "₹"}
+                  </button>
+                  <input
+                    id="budget"
+                    type="number"
+                    name="budget"
+                    value={formData.budget}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Enter budget"
+                    className="w-full min-w-0 px-4 py-3 rounded-xl bg-secondary border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -204,15 +343,22 @@ export function ContactForm() {
               </div>
             </div>
 
+            {errorMessage && (
+              <p role="alert" className="text-sm text-destructive">
+                {errorMessage}
+              </p>
+            )}
+
             {/* Submit Button */}
             <motion.button
               type="submit"
+              disabled={isSubmitting}
               className="w-full py-4 px-8 bg-gradient-primary text-primary-foreground font-semibold rounded-xl glow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-3 mt-4"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <Send className="w-5 h-5" />
-              Send Message
+              {isSubmitting ? "Sending..." : "Send Message"}
             </motion.button>
           </div>
         </motion.form>

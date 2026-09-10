@@ -7,9 +7,16 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8090,
+    proxy: {
+      "/api": "http://127.0.0.1:8000",
+      "/media/": "http://127.0.0.1:8000",
+    },
     hmr: {
       overlay: false,
+    },
+    watch: {
+      ignored: ["**/sol_rasa/**", "**/solrasa_v1/**", "**/craft-boutique-online/**"],
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

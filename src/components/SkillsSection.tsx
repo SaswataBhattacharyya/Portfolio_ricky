@@ -8,18 +8,21 @@ const skills = [
     title: "Animation",
     description:
       "Creating captivating motion graphics and micro-interactions that bring interfaces to life and enhance user engagement.",
+    to: "/animation",
   },
   {
     icon: Code,
     title: "Web Development",
     description:
       "Full-stack expertise in modern frameworks. From pixel-perfect frontends to robust, scalable backend architectures.",
+    to: "/web-development",
   },
   {
     icon: Video,
     title: "Video Production",
     description:
       "End-to-end video creation including AI-generated content, professional editing, and motion graphics for all platforms.",
+    to: "/video-production",
   },
 ];
 
@@ -73,6 +76,7 @@ export function SkillsSection() {
               title={skill.title}
               description={skill.description}
               index={index}
+              to={skill.to}
             />
           ))}
         </div>

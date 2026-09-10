@@ -1,8 +1,18 @@
 import { motion } from "framer-motion";
 import { ContactForm } from "./ContactForm";
 import { Mail, Rocket } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 
 export function ContactSection() {
+  const { data } = useQuery({
+    queryKey: ["public-settings"],
+    queryFn: () => apiFetch<{ publicContactEmail: string }>("/settings/public/"),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const publicEmail = data?.publicContactEmail || import.meta.env.VITE_PUBLIC_CONTACT_EMAIL || "hello@example.com";
+
   return (
     <section id="contact" className="py-32 section-padding relative">
       {/* Background effects */}
@@ -71,10 +81,10 @@ export function ContactSection() {
             <Mail className="w-4 h-4" />
             Prefer email? Reach me at{" "}
             <a
-              href="mailto:hello@example.com"
+              href={`mailto:${publicEmail}`}
               className="text-primary hover:underline"
             >
-              hello@example.com
+              {publicEmail}
             </a>
           </p>
         </motion.div>

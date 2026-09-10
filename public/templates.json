@@ -1,0 +1,21 @@
+{
+  "local": [
+    {
+      "id": "craft-boutique-online",
+      "title": "Craft Boutique Online",
+      "description": "Handicraft ecommerce storefront with product discovery, detail pages, cart, and checkout flow.",
+      "url": "http://localhost:8081",
+      "sourcePath": "craft-boutique-online",
+      "previewImage": "/template-previews/craft-boutique-online.png"
+    }
+  ],
+  "deployed": [
+    {
+      "id": "sol-rasa",
+      "title": "Sol Rasa",
+      "description": "Fashion commerce experience with collection browsing, product pages, cart, checkout, and account flows.",
+      "url": "https://www.solrasa.com",
+      "previewImage": "/template-previews/sol-rasa.png"
+    }
+  ]
+}

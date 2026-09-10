@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__/
+*.py[cod]
+.playwright-mcp/
+
+# Local screenshots and browser QA captures kept outside the repository
+/*.png
+/*.jpg
+/*.jpeg
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +30,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OpenCode hybrid agent kit (local IDE tooling - keep out of uploads)
+.opencode/
+opencode.json
+AGENTS.md
+HYBRID_SETUP.md
+MANIFEST.md
+
+# Graphify knowledge graph (generated locally)
+graphify-out/
+
+# Local planning docs (not for upload)
+plans/
+
+# Runtime data and secrets
+.env
+.env.*
+!.env.example
+dev-data/
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+media/
+imported-sites/
+backups/
+
+# Separate reference project not used by Webberick
+solrasa_v1/
