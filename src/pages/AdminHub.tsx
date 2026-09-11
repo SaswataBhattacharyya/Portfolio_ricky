@@ -27,7 +27,7 @@ import { enableAdminPush } from "@/lib/push";
 
 type Overview = { totalGigs: number; thisMonth: number; visitors: number; animations: number; videos: number; websites: number; importedWebsites: number };
 type Submission = { id: number; name: string; email: string; description: string; status: string; createdAt: string; budget: string; budgetUsd?: string; currency: string; duration: string };
-type Settings = { receiverEmail: string; publicContactEmail: string; emailNotificationsEnabled: boolean; pushNotificationsEnabled: boolean };
+type Settings = { smtpSenderEmail: string; receiverEmail: string; publicContactEmail: string; emailNotificationsEnabled: boolean; pushNotificationsEnabled: boolean };
 type CmsItem = { id: string | number; title: string; description: string; kind?: string; url?: string; sourcePath?: string };
 
 export default function AdminHub() {
@@ -87,6 +87,7 @@ export default function AdminHub() {
     setSettings(merged);
     try {
       await apiFetch("/admin/settings/", { method: "PATCH", body: JSON.stringify({
+        smtp_sender_email: merged.smtpSenderEmail,
         receiver_email: merged.receiverEmail,
         public_contact_email: merged.publicContactEmail,
         email_notifications_enabled: merged.emailNotificationsEnabled,
@@ -305,8 +306,20 @@ export default function AdminHub() {
                   </label>
 
                   <div className="grid gap-2 border-t border-border/60 pt-5">
+                    <label htmlFor="smtp-sender-email" className="text-sm font-medium text-foreground">
+                      Gmail sender email
+                    </label>
+                    <input
+                      id="smtp-sender-email"
+                      type="email"
+                      value={settings.smtpSenderEmail}
+                      onChange={(event) => setSettings({ ...settings, smtpSenderEmail: event.target.value })}
+                      onBlur={() => void saveSettings({ smtpSenderEmail: settings.smtpSenderEmail })}
+                      placeholder="Gmail account that sends notifications"
+                      className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
                     <label htmlFor="contact-email" className="text-sm font-medium text-foreground">
-                      Contact email
+                      Gig receiver email
                     </label>
                     <input
                       id="contact-email"
@@ -315,6 +328,18 @@ export default function AdminHub() {
                       onChange={(event) => setSettings({ ...settings, receiverEmail: event.target.value })}
                       onBlur={() => void saveSettings({ receiverEmail: settings.receiverEmail })}
                       placeholder="Where new gigs should arrive"
+                      className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                    <label htmlFor="public-contact-email" className="text-sm font-medium text-foreground">
+                      Public contact email
+                    </label>
+                    <input
+                      id="public-contact-email"
+                      type="email"
+                      value={settings.publicContactEmail}
+                      onChange={(event) => setSettings({ ...settings, publicContactEmail: event.target.value })}
+                      onBlur={() => void saveSettings({ publicContactEmail: settings.publicContactEmail })}
+                      placeholder="Email shown to visitors"
                       className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                   </div>

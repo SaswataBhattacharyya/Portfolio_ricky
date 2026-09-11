@@ -26,6 +26,7 @@ class Submission(models.Model):
 
 
 class SiteSettings(models.Model):
+    smtp_sender_email = models.EmailField(blank=True)
     receiver_email = models.EmailField(blank=True)
     public_contact_email = models.EmailField(blank=True)
     email_notifications_enabled = models.BooleanField(default=True)

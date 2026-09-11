@@ -36,27 +36,18 @@ if [ ! -f "$ENV_FILE" ]; then
   ADMIN_PASSWORD="$(ask_secret 'Admin password: ')"
   ADMIN_CONFIRM="$(ask_secret 'Confirm admin password: ')"
   [ "$ADMIN_PASSWORD" = "$ADMIN_CONFIRM" ] || { echo "Admin passwords do not match." >&2; exit 1; }
-  GMAIL_ADDRESS="$(read -r -p 'Gmail SMTP address: ' value < /dev/tty; printf '%s' "$value")"
-  GIG_RECEIVER_EMAIL="$(read -r -p 'Gig receiver address: ' value < /dev/tty; printf '%s' "$value")"
   GMAIL_APP_PASSWORD="$(ask_secret 'Gmail App Password: ')"
   GMAIL_CONFIRM="$(ask_secret 'Confirm Gmail App Password: ')"
   [ "$GMAIL_APP_PASSWORD" = "$GMAIL_CONFIRM" ] || { echo "Gmail App Passwords do not match." >&2; exit 1; }
-  PUBLIC_CONTACT_EMAIL="$(read -r -p 'Public contact email: ' value < /dev/tty; printf '%s' "$value")"
   DB_PASSWORD="$(openssl rand -hex 30)"
   DJANGO_SECRET_KEY="$(openssl rand -hex 48)"
   VAPID_PUBLIC_KEY=""
   VAPID_PRIVATE_KEY=""
-  postgres_cmd psql <<SQL
-DO \\$\$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'webberick') THEN
-    CREATE ROLE webberick LOGIN PASSWORD '$DB_PASSWORD';
-  ELSE
-    ALTER ROLE webberick WITH PASSWORD '$DB_PASSWORD';
-  END IF;
-END
-\\$\$;
-SQL
+  if postgres_cmd psql -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'webberick'" | grep -q 1; then
+    postgres_cmd psql -v ON_ERROR_STOP=1 -c "ALTER ROLE webberick WITH LOGIN PASSWORD '$DB_PASSWORD';"
+  else
+    postgres_cmd psql -v ON_ERROR_STOP=1 -c "CREATE ROLE webberick LOGIN PASSWORD '$DB_PASSWORD';"
+  fi
   postgres_cmd psql -tc "SELECT 1 FROM pg_database WHERE datname = 'webberick'" | grep -q 1 || postgres_cmd createdb -O webberick webberick
   as_root tee "$ENV_FILE" >/dev/null <<EOF
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
@@ -68,13 +59,13 @@ DATABASE_USER=webberick
 DATABASE_PASSWORD=$DB_PASSWORD
 DATABASE_HOST=127.0.0.1
 DATABASE_PORT=5432
-GMAIL_ADDRESS=$GMAIL_ADDRESS
+GMAIL_ADDRESS=
 GMAIL_APP_PASSWORD=$GMAIL_APP_PASSWORD
-GIG_RECEIVER_EMAIL=$GIG_RECEIVER_EMAIL
-PUBLIC_CONTACT_EMAIL=$PUBLIC_CONTACT_EMAIL
+GIG_RECEIVER_EMAIL=
+PUBLIC_CONTACT_EMAIL=
 VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY
-VAPID_CLAIM_EMAIL=mailto:$GMAIL_ADDRESS
+VAPID_CLAIM_EMAIL=mailto:$ADMIN_EMAIL
 MEDIA_ROOT=/srv/webberick/media
 IMPORT_ROOT=/srv/webberick/imported-sites
 STATIC_ROOT=/srv/webberick/app/backend/staticfiles

@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
-from django.core.mail import send_mail
+from django.core.mail import get_connection, send_mail
 from django.db import transaction
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -217,15 +217,23 @@ def submissions(request):
     settings_row = SiteSettings.singleton()
     receiver = settings_row.receiver_email or settings.GIG_RECEIVER_EMAIL
     email_ok = False
-    if settings_row.email_notifications_enabled and receiver:
+    sender = settings_row.smtp_sender_email or settings.EMAIL_HOST_USER
+    if settings_row.email_notifications_enabled and receiver and sender:
         try:
+            connection = get_connection(
+                backend=settings.EMAIL_BACKEND,
+                fail_silently=False,
+                username=sender,
+                password=settings.EMAIL_HOST_PASSWORD,
+            )
             send_mail(
                 f"New Webberick gig from {submission.name}",
                 f"{submission.description}\n\nBudget: {submission.budget} {submission.currency}\nTimeline: {submission.duration}\nCountry: {submission.country}",
-                settings.DEFAULT_FROM_EMAIL,
+                sender,
                 [receiver],
                 reply_to=[submission.email],
                 fail_silently=False,
+                connection=connection,
             )
             email_ok = True
         except Exception as exc:
@@ -329,7 +337,7 @@ def admin_settings(request):
     row = SiteSettings.singleton()
     if request.method == "PATCH":
         data = payload(request) or {}
-        for field in ["receiver_email", "public_contact_email"]:
+        for field in ["smtp_sender_email", "receiver_email", "public_contact_email"]:
             if field in data:
                 setattr(row, field, str(data[field]).strip())
         for field in ["email_notifications_enabled", "push_notifications_enabled"]:
@@ -338,6 +346,7 @@ def admin_settings(request):
         row.save()
         audit(request, "settings_changed")
     return JsonResponse({
+        "smtpSenderEmail": row.smtp_sender_email,
         "receiverEmail": row.receiver_email or settings.GIG_RECEIVER_EMAIL,
         "publicContactEmail": row.public_contact_email or settings.PUBLIC_CONTACT_EMAIL,
         "emailNotificationsEnabled": row.email_notifications_enabled,
