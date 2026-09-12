@@ -12,6 +12,7 @@ if [ "${SKIP_GIT_PULL:-no}" != "yes" ]; then git pull --ff-only; fi
 as_root rsync -a --exclude node_modules --exclude dist --exclude .git --exclude .env --exclude dev-data --exclude media --exclude imported-sites --exclude backups "$ROOT_DIR/" "$APP_ROOT/"
 as_root "$VENV/bin/pip" install -r "$APP_ROOT/requirements.txt"
 as_root npm --prefix "$APP_ROOT" ci --no-fund
+as_root npm --prefix "$APP_ROOT" audit --omit=dev --audit-level=high || echo "npm audit reported dependency advisories; review the report above."
 as_root "$VENV/bin/python" "$APP_ROOT/backend/manage.py" check --deploy
 as_root npm --prefix "$APP_ROOT" run build
 as_root rsync -a --delete "$APP_ROOT/dist/" /srv/webberick/www/
