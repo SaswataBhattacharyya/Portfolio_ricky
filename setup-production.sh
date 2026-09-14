@@ -78,8 +78,11 @@ else
 fi
 
 if [ -f "$ENV_FILE" ]; then
-  as_root chown root:webberick "$ENV_FILE"
-  as_root chmod 640 "$ENV_FILE"
+  # Django is bootstrapped as the restricted service user, so that user must
+  # be able to read the server-only environment without making it world-readable.
+  as_root chown webberick:webberick "$ENV_FILE"
+  as_root chmod 600 "$ENV_FILE"
+  as_user webberick test -r "$ENV_FILE"
 fi
 
 as_root rsync -a --exclude node_modules --exclude dist --exclude .git --exclude .env --exclude dev-data --exclude media --exclude imported-sites --exclude backups "$ROOT_DIR/" "$APP_ROOT/"
@@ -89,7 +92,8 @@ as_root "$VENV/bin/pip" install --upgrade pip
 as_root "$VENV/bin/pip" install -r "$APP_ROOT/requirements.txt"
 as_root env WEBBERICK_ENV_FILE="$ENV_FILE" "$VENV/bin/python" "$APP_ROOT/backend/manage.py" generate_vapid
 as_root npm --prefix "$APP_ROOT" ci --no-fund
-as_root npm --prefix "$APP_ROOT" audit --omit=dev --audit-level=high || echo "npm audit reported dependency advisories; review the report above."
+echo "Running npm audit (all installed dependencies)..."
+as_root npm --prefix "$APP_ROOT" audit --audit-level=low
 as_root npm --prefix "$APP_ROOT" run build
 as_root rsync -a --delete "$APP_ROOT/dist/" /srv/webberick/www/
 as_root "$VENV/bin/python" "$APP_ROOT/backend/manage.py" migrate --noinput
