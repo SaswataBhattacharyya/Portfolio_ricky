@@ -110,7 +110,10 @@ as_root install -m 0644 "$APP_ROOT/deployment/nginx/webberick.conf" /etc/nginx/s
 as_root ln -sfn /etc/nginx/sites-available/webberick /etc/nginx/sites-enabled/webberick
 as_root rm -f /etc/nginx/sites-enabled/default
 as_root systemctl daemon-reload
-as_root systemctl enable --now webberick-gunicorn
+as_root systemctl enable webberick-gunicorn
+as_root systemctl restart webberick-gunicorn
 as_root nginx -t
 as_root systemctl enable --now nginx
+as_root systemctl reload nginx
+as_root curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/health/ >/dev/null
 printf '%s\n' "Initial setup complete. HTTPS is intentionally not requested until DNS points to this host."
