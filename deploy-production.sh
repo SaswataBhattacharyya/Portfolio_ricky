@@ -19,6 +19,7 @@ as_root npm --prefix "$APP_ROOT" run build
 as_root rsync -a --delete "$APP_ROOT/dist/" /srv/webberick/www/
 as_root "$VENV/bin/python" "$APP_ROOT/backend/manage.py" migrate --noinput
 as_root "$VENV/bin/python" "$APP_ROOT/backend/manage.py" collectstatic --noinput
+as_root "$VENV/bin/python" "$APP_ROOT/backend/manage.py" import_portfolio
 as_root systemctl restart webberick-gunicorn
 as_root nginx -t
 as_root systemctl reload nginx

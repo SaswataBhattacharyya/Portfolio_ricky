@@ -47,11 +47,27 @@ class Command(BaseCommand):
             data = json.loads(registry.read_text())
             for kind, entries in (("imported", data.get("local", [])), ("deployed", data.get("deployed", []))):
                 for entry in entries:
-                    if WebsitePortfolioItem.objects.filter(title=entry["title"]).exists():
-                        continue
-                    WebsitePortfolioItem.objects.create(
-                        title=entry["title"], description=entry["description"], kind=kind,
-                        url=entry.get("url", "") if kind == "deployed" else "",
-                        source_label=entry.get("sourcePath", entry["id"]),
+                    item = WebsitePortfolioItem.objects.filter(title=entry["title"]).first()
+                    if item is None:
+                        item = WebsitePortfolioItem.objects.create(
+                            title=entry["title"], description=entry["description"], kind=kind,
+                            url=entry.get("url", "") if kind == "deployed" else "",
+                            source_label=entry.get("sourcePath", entry["id"]),
+                        )
+
+                    # Backfill repository preview images for rows imported before
+                    # preview uploads became part of the portfolio model.
+                    preview_name = str(entry.get("previewImage", "")).lstrip("/")
+                    preview_source = root / "public" / preview_name
+                    preview_exists = bool(
+                        item.preview_image
+                        and item.preview_image.name
+                        and item.preview_image.storage.exists(item.preview_image.name)
                     )
+                    if not preview_exists and preview_name and preview_source.is_file():
+                        if item.preview_image:
+                            item.preview_image.delete(save=False)
+                        with preview_source.open("rb") as handle:
+                            item.preview_image.save(preview_source.name, File(handle), save=False)
+                        item.save(update_fields=["preview_image", "updated_at"])
         self.stdout.write(self.style.SUCCESS("Portfolio import completed."))
