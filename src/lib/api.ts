@@ -41,4 +41,39 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
   return body as T;
 }
 
+export async function apiUpload<T = unknown>(
+  path: string,
+  form: FormData,
+  onProgress?: (progress: number) => void,
+): Promise<T> {
+  await ensureCsrf();
+  return new Promise<T>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`);
+    request.withCredentials = true;
+    const token = csrfToken();
+    if (token) request.setRequestHeader("X-CSRFToken", decodeURIComponent(token));
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
+    });
+    request.addEventListener("error", () => reject(new Error("Upload failed. Check your connection and try again.")));
+    request.addEventListener("abort", () => reject(new Error("Upload was cancelled.")));
+    request.addEventListener("load", () => {
+      let body: { error?: string } & T;
+      try {
+        body = JSON.parse(request.responseText || "{}");
+      } catch {
+        reject(new Error(`Request failed (${request.status})`));
+        return;
+      }
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error(body.error || `Request failed (${request.status})`));
+        return;
+      }
+      resolve(body);
+    });
+    request.send(form);
+  });
+}
+
 export { API_BASE };

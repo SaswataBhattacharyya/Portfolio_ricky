@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import mimetypes
+import os
 import re
 import shutil
 import subprocess
@@ -16,7 +18,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
 from django.core.mail import get_connection, send_mail
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -123,6 +125,9 @@ def media_dict(request, item: PortfolioMedia):
 
 
 def website_dict(request, item: WebsitePortfolioItem):
+    preview_url = ""
+    if item.kind == "imported" and item.preview_status == "static" and item.source_label:
+        preview_url = f"/webdev/undeployed/{item.source_label}/"
     return {
         "id": str(item.pk),
         "title": item.title,
@@ -133,6 +138,9 @@ def website_dict(request, item: WebsitePortfolioItem):
         "kind": item.kind,
         "gitUrl": item.git_url,
         "importStatus": item.import_status,
+        "previewStatus": item.preview_status,
+        "previewError": item.preview_error,
+        "previewUrl": preview_url,
     }
 
 
@@ -428,11 +436,17 @@ def admin_websites(request):
     url = str(data.get("url", "")).strip()
     if url and urlparse(url).scheme not in {"http", "https"}:
         return error("Website URL must use HTTP or HTTPS")
+    preview_image = request.FILES.get("previewImage")
+    if preview_image:
+        if preview_image.size > settings.MEDIA_MAX_UPLOAD_BYTES:
+            return error("Homepage preview image is too large")
+        if Path(preview_image.name).suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            return error("Homepage preview image must be JPG, PNG, or WebP")
     item = WebsitePortfolioItem.objects.create(
         title=str(data.get("title", "Untitled"))[:200], description=str(data.get("description", ""))[:2000],
         kind="imported" if data.get("gitUrl") else "deployed", url=url, git_url=str(data.get("gitUrl", "")),
         branch=str(data.get("branch", ""))[:120], source_label=str(data.get("sourcePath", ""))[:200],
-        display_order=int(data.get("displayOrder", "0") or 0), preview_image=request.FILES.get("previewImage"),
+        display_order=int(data.get("displayOrder", "0") or 0), preview_image=preview_image,
     )
     audit(request, "website_added", "website", str(item.pk))
     return JsonResponse({"item": website_dict(request, item)}, status=201)
@@ -448,6 +462,11 @@ def admin_website_detail(request, website_id: int):
     if request.method == "DELETE":
         if item.preview_image:
             item.preview_image.delete(save=False)
+        if item.kind == "imported" and item.import_path:
+            import_root = Path(settings.IMPORT_ROOT).resolve()
+            imported_path = Path(item.import_path).resolve()
+            if import_root in imported_path.parents and imported_path != import_root:
+                shutil.rmtree(imported_path, ignore_errors=True)
         item.delete()
         audit(request, "website_deleted", "website", str(website_id))
         return JsonResponse({"deleted": True})
@@ -475,18 +494,34 @@ def safe_git_url(value: str) -> bool:
         return True
 
 
+def static_preview_root(destination: Path) -> Path | None:
+    for candidate in (destination / "dist", destination / "build"):
+        index = candidate / "index.html"
+        if candidate.is_dir() and index.is_file():
+            return candidate
+    return None
+
+
 @admin_required
 @require_http_methods(["POST"])
 def admin_git_import(request):
-    data = payload(request) or {}
+    data = request.POST if request.content_type.startswith("multipart/form-data") else (payload(request) or {})
     git_url = str(data.get("gitUrl", "")).strip()
     if not safe_git_url(git_url):
         return error("Only approved HTTPS Git repository URLs are allowed")
+    preview_image = request.FILES.get("previewImage")
+    if preview_image:
+        if preview_image.size > settings.MEDIA_MAX_UPLOAD_BYTES:
+            return error("Homepage preview image is too large")
+        if Path(preview_image.name).suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            return error("Homepage preview image must be JPG, PNG, or WebP")
     project_id = uuid.uuid4().hex
     destination = Path(settings.IMPORT_ROOT) / project_id
     destination.parent.mkdir(parents=True, exist_ok=True)
     args = ["git", "clone", "--depth", "1"]
     branch = str(data.get("branch", "")).strip()
+    if branch and (len(branch) > 120 or not re.match(r"^[A-Za-z0-9._/-]+$", branch) or branch.startswith("-")):
+        return error("Invalid Git branch name")
     if branch:
         args.extend(["--branch", branch])
     args.extend([git_url, str(destination)])
@@ -495,13 +530,108 @@ def admin_git_import(request):
     except (subprocess.SubprocessError, OSError) as exc:
         shutil.rmtree(destination, ignore_errors=True)
         return error(f"Git import failed: {str(exc)[:200]}", 502)
+    preview_root = static_preview_root(destination)
     item = WebsitePortfolioItem.objects.create(
         title=str(data.get("title", project_id))[:200], description=str(data.get("description", ""))[:2000],
         kind="imported", git_url=git_url, branch=branch, source_label=project_id,
-        import_status="ready", import_path=str(destination),
+        import_status="ready", import_path=str(destination), preview_image=preview_image,
+        preview_status="static" if preview_root else "build_required",
+        preview_path=str(preview_root or ""),
     )
     audit(request, "git_import_completed", "website", str(item.pk))
     return JsonResponse({"item": website_dict(request, item)}, status=201)
+
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_website_preview_build(request, website_id: int):
+    try:
+        item = WebsitePortfolioItem.objects.get(pk=website_id, kind="imported")
+    except WebsitePortfolioItem.DoesNotExist:
+        return error("Imported website not found", 404)
+    if item.preview_status == "static" and item.preview_path:
+        return JsonResponse({"item": website_dict(request, item)})
+    destination = Path(item.import_path).resolve()
+    import_root = Path(settings.IMPORT_ROOT).resolve()
+    if import_root not in destination.parents or not destination.is_dir():
+        return error("Imported website directory is unavailable", 409)
+    package_path = destination / "package.json"
+    if not package_path.is_file():
+        item.preview_status = "failed"
+        item.preview_error = "No package.json was found; upload a homepage preview image instead."
+        item.save(update_fields=["preview_status", "preview_error", "updated_at"])
+        return error(item.preview_error, 422)
+    try:
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return error(f"Could not read package.json: {str(exc)[:160]}", 422)
+    scripts = package.get("scripts") if isinstance(package, dict) else None
+    if not isinstance(scripts, dict) or not scripts.get("build") or scripts.get("prebuild") or scripts.get("postbuild"):
+        item.preview_status = "failed"
+        item.preview_error = "This repository does not define a build script. Upload a homepage preview image instead."
+        item.save(update_fields=["preview_status", "preview_error", "updated_at"])
+        return error(item.preview_error, 422)
+    item.preview_status = "building"
+    item.preview_error = ""
+    item.save(update_fields=["preview_status", "preview_error", "updated_at"])
+    try:
+        build_environment = {
+            "PATH": os.environ.get("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"),
+            "HOME": str(destination),
+            "CI": "1",
+            "npm_config_ignore_scripts": "true",
+            "npm_config_cache": str(destination / ".npm-cache"),
+        }
+        subprocess.run(
+            ["npm", "install", "--ignore-scripts", "--no-audit", "--no-fund"],
+            cwd=destination, check=True, capture_output=True, text=True, timeout=600, env=build_environment,
+        )
+        subprocess.run(
+            ["npm", "run", "build"], cwd=destination, check=True,
+            capture_output=True, text=True, timeout=600, env=build_environment,
+        )
+    except (subprocess.SubprocessError, OSError) as exc:
+        item.preview_status = "failed"
+        item.preview_error = str(exc)[:1000]
+        item.save(update_fields=["preview_status", "preview_error", "updated_at"])
+        audit(request, "git_preview_failed", "website", str(item.pk))
+        return error("Preview build failed. Check the Admin Hub status for details.", 422)
+    preview_root = static_preview_root(destination)
+    if not preview_root:
+        item.preview_status = "failed"
+        item.preview_error = "Build completed but no dist/index.html or build/index.html was produced."
+        item.save(update_fields=["preview_status", "preview_error", "updated_at"])
+        return error(item.preview_error, 422)
+    item.preview_status = "static"
+    item.preview_path = str(preview_root)
+    item.preview_error = ""
+    item.save(update_fields=["preview_status", "preview_path", "preview_error", "updated_at"])
+    audit(request, "git_preview_ready", "website", str(item.pk))
+    return JsonResponse({"item": website_dict(request, item)})
+
+
+def preview_website(request, project_id: str, subpath: str = ""):
+    try:
+        item = WebsitePortfolioItem.objects.get(source_label=project_id, kind="imported", preview_status="static")
+    except WebsitePortfolioItem.DoesNotExist:
+        return error("Preview not found", 404)
+    root = Path(item.preview_path).resolve()
+    requested = (root / subpath).resolve()
+    if root not in requested.parents and requested != root:
+        return error("Invalid preview path", 400)
+    if requested.is_dir():
+        requested = requested / "index.html"
+    if not requested.is_file():
+        requested = root / "index.html"
+    if not requested.is_file():
+        return error("Preview file not found", 404)
+    content_type, _ = mimetypes.guess_type(requested.name)
+    if requested.name == "index.html":
+        prefix = f"/webdev/undeployed/{project_id}/"
+        html = requested.read_text(encoding="utf-8", errors="replace")
+        html = re.sub(r"([\"'(])/(?!/)", rf"\1{prefix}", html)
+        return HttpResponse(html, content_type="text/html; charset=utf-8")
+    return FileResponse(requested.open("rb"), content_type=content_type or "application/octet-stream")
 
 
 def vapid_public_key(request):

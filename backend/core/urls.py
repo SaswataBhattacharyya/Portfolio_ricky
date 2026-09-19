@@ -4,6 +4,8 @@ from . import views
 
 
 urlpatterns = [
+    path("preview/<slug:project_id>/", views.preview_website),
+    path("preview/<slug:project_id>/<path:subpath>", views.preview_website),
     path("health/", views.health),
     path("auth/csrf/", views.csrf),
     path("auth/login/", views.login_view),
@@ -25,5 +27,6 @@ urlpatterns = [
     path("admin/media/<int:media_id>/", views.admin_media_detail),
     path("admin/websites/", views.admin_websites),
     path("admin/websites/<int:website_id>/", views.admin_website_detail),
+    path("admin/websites/<int:website_id>/preview-build/", views.admin_website_preview_build),
     path("admin/git-import/", views.admin_git_import),
 ]

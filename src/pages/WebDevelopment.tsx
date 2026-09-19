@@ -12,9 +12,11 @@ const localEntrySchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  url: z.string().url(),
+  url: z.string(),
   sourcePath: z.string().optional(),
   previewImage: z.string(),
+  previewUrl: z.string().optional(),
+  previewStatus: z.string().optional(),
 });
 
 const deployedEntrySchema = z.object({
@@ -43,6 +45,7 @@ const cardVariants = {
 };
 
 async function isReachable(url: string): Promise<boolean> {
+  if (!url) return false;
   try {
     await fetch(url, { mode: "no-cors", cache: "no-store" });
     return true;
@@ -97,11 +100,12 @@ function StatusBadge({ status }: { status: Reachability }) {
 }
 
 function LocalCard({ entry, index }: { entry: LocalEntry; index: number }) {
-  const status = useReachability(entry.url);
+  const targetUrl = entry.previewUrl || entry.url;
+  const status = useReachability(targetUrl);
   return (
     <motion.a
       key={entry.id}
-      href={entry.url}
+      href={targetUrl || undefined}
       target="_blank"
       rel="noreferrer"
       custom={index}
@@ -113,7 +117,7 @@ function LocalCard({ entry, index }: { entry: LocalEntry; index: number }) {
     >
       <div className="aspect-[16/10] bg-secondary overflow-hidden border-b border-border/50">
         <img
-          src={entry.previewImage}
+          src={entry.previewImage || "/placeholder.svg"}
           alt={`${entry.title} homepage preview`}
           className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
         />
@@ -137,7 +141,7 @@ function LocalCard({ entry, index }: { entry: LocalEntry; index: number }) {
 
         <p className="text-muted-foreground leading-relaxed mb-5">{entry.description}</p>
         <div className="flex items-center justify-between gap-4">
-          <div className="text-sm font-medium text-primary">{entry.url}</div>
+          <div className="text-sm font-medium text-primary">{targetUrl || "Preview not ready"}</div>
           <StatusBadge status={status} />
         </div>
         {status === "offline" && (
@@ -166,7 +170,7 @@ function DeployedCard({ entry, index }: { entry: DeployedEntry; index: number })
     >
       <div className="aspect-[16/10] bg-secondary overflow-hidden border-b border-border/50">
         <img
-          src={entry.previewImage}
+          src={entry.previewImage || "/placeholder.svg"}
           alt={`${entry.title} homepage preview`}
           className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
         />

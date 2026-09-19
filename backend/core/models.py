@@ -60,6 +60,7 @@ class PortfolioMedia(models.Model):
 class WebsitePortfolioItem(models.Model):
     KIND_CHOICES = [("deployed", "Deployed"), ("imported", "Imported")]
     IMPORT_CHOICES = [("none", "None"), ("pending", "Pending"), ("ready", "Ready"), ("failed", "Failed")]
+    PREVIEW_CHOICES = [("none", "None"), ("static", "Static preview"), ("build_required", "Build required"), ("building", "Building"), ("ready", "Ready"), ("failed", "Failed")]
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=2000)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES, default="deployed")
@@ -73,6 +74,9 @@ class WebsitePortfolioItem(models.Model):
     import_status = models.CharField(max_length=20, choices=IMPORT_CHOICES, default="none")
     import_path = models.CharField(max_length=500, blank=True)
     import_error = models.TextField(blank=True)
+    preview_status = models.CharField(max_length=20, choices=PREVIEW_CHOICES, default="none")
+    preview_path = models.CharField(max_length=500, blank=True)
+    preview_error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
