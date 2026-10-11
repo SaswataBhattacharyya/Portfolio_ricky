@@ -15,7 +15,7 @@ The new wordmark uses the same triple-click-within-700ms interaction as the orig
 The redesigned homepage form exposes the original Django-required fields and only sends genuine user-provided values. Its project preview images load from the existing checked-in `public/template-previews/` assets. Original media, admin, and web-development routes are preserved.
 
 ## Validation
-CI runs `npm ci`, `npm run build`, `npm run test`, `npm run lint`, and `python backend/manage.py check`.
+CI runs `npm ci`, `npm run build`, `npm run test`, a focused ESLint check covering all added/changed TypeScript files, and `python backend/manage.py check`. The existing full-repository `npm run lint` has 5 pre-existing errors in unrelated files (including AdminHub); those files remain untouched as requested. These existing lint errors must be handled separately before global lint can be used as a blocking check.
 
 ## Deployment
 This PR does not change the production deployment scripts. Merge only after CI and browser verification of the loading animation, admin logo gesture, admin dashboard, and form delivery.
