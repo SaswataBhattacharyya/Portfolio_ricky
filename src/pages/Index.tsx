@@ -1,12 +1,17 @@
-import { FormEvent, type MouseEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FormEvent, type MouseEvent, type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { WebberickMascot, type WebberickMascotState } from "@/components/home/WebberickMascot";
 import { apiFetch } from "@/lib/api";
 import { AdminEntryAnimation } from "@/components/AdminEntryAnimation";
 import { Link, useNavigate } from "react-router-dom";
 import { initialInquiry, toSubmissionPayload, type InquiryForm } from "@/lib/inquiry";
+import { useTheme } from "@/components/ThemeProvider";
+import { Moon, Sun } from "lucide-react";
+import { motion } from "framer-motion";
+import { gsap } from "gsap";
 
 const sectionIds = ["work", "services", "why-webberick", "about", "faq", "contact"] as const;
-type MascotPlacement = "hero" | "dock" | "process" | "contact";
+type MascotPlacement = "hidden" | "hero" | "dock" | "process" | "contact";
+
 
 function useHomepageStyles() {
   useLayoutEffect(() => {
@@ -136,7 +141,7 @@ function useHomepageMotion() {
           }
         });
       },
-      { threshold: 0.13, rootMargin: "0px 0px -7% 0px" },
+      { threshold: 0, rootMargin: "0px" },
     );
 
     document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
@@ -161,72 +166,212 @@ function useHomepageMotion() {
   }, []);
 }
 
-function useMascotPlacement() {
-  const [placement, setPlacement] = useState<MascotPlacement>("hero");
+function useMascotPlacement(mascotRef: RefObject<HTMLElement>) {
+  const [placement, setPlacement] = useState<MascotPlacement>("hidden");
 
-  useEffect(() => {
-    const hero = document.getElementById("hero");
-    const process = document.getElementById("why-webberick");
-    const contact = document.getElementById("contact");
+  useLayoutEffect(() => {
+    const element = mascotRef.current;
+    const body = element?.querySelector<HTMLElement>(".mascot-jump-body");
     const topbar = document.querySelector<HTMLElement>(".topbar");
+    const mark = document.querySelector<HTMLElement>(".wordmark");
+    if (!element || !body || !topbar || !mark) return;
 
-    if (!hero || !process || !contact) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let current: MascotPlacement = "hidden";
+    let entered = false;
+    let ready = !document.querySelector('[aria-label="Loading Webberick"]');
+    let intent = false;
+    let baseline = window.scrollY;
+    let frame = 0;
+    let flight: gsap.core.Timeline | null = null;
+    let heroEntrance: gsap.core.Timeline | null = null;
+    const titles = Array.from(document.querySelectorAll<HTMLElement>("#hero .hero-charge"));
+    // Prepare before paint so complete words cannot flash ahead of their entrance.
+    if (!reduced.matches) {
+      titles.forEach((title) => title.classList.add("is-typing"));
+      gsap.set(titles.flatMap((title) => Array.from(title.children)), { opacity: 0 });
+    }
+    const progress = { value: 0 };
 
-    let ticking = false;
-
-    const resolvePlacement = () => {
-      ticking = false;
-      const viewportHeight = window.innerHeight;
-      const topbarHeight = topbar?.getBoundingClientRect().height ?? 68;
-      const heroRect = hero.getBoundingClientRect();
-      const processRect = process.getBoundingClientRect();
-      const contactRect = contact.getBoundingClientRect();
-
-      let next: MascotPlacement = "dock";
-
-      if (heroRect.bottom > topbarHeight + 96) {
-        next = "hero";
-      } else if (contactRect.top < viewportHeight * 0.68 && contactRect.bottom > viewportHeight * 0.24) {
-        next = "contact";
-      } else if (processRect.top < viewportHeight * 0.62 && processRect.bottom > viewportHeight * 0.3) {
-        next = "process";
+    // The SVG has transparent padding. Track the visible character, not its square canvas.
+    const target = (place: MascotPlacement) => {
+      const host = document.querySelector<HTMLElement>(`.mascot-host--${place}`)!;
+      const rect = host.getBoundingClientRect();
+      if (place === "dock") {
+        const logo = mark.getBoundingClientRect();
+        return { x: logo.right + 16, y: logo.top + logo.height / 2 - 23, width: 46 };
       }
-
-      setPlacement((current) => current === next ? current : next);
+      const width = rect.width;
+      let y = rect.top;
+      if (place === "hero") {
+        const heroBottom = document.getElementById("hero")!.getBoundingClientRect().bottom;
+        y = Math.min(y, heroBottom - 24 - width * 0.78);
+      }
+      return {
+        x: Math.max(-width * 0.20 + 16, Math.min(rect.left, window.innerWidth - width * 0.79 - 16)),
+        y, width,
+      };
     };
-
-    const schedule = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(resolvePlacement);
+    const choose = (): MascotPlacement => {
+      const navBottom = topbar.getBoundingClientRect().bottom;
+      for (const place of ["hero", "contact", "process"] as const) {
+        const dest = target(place);
+        const visibleTop = dest.y + dest.width * 0.21;
+        const visibleBottom = dest.y + dest.width * 0.78;
+        // Leave before the character touches the navbar; return only to a visible landing.
+        const clearance = place === "hero" ? (current === "hero" ? 64 : 88) : (current === place ? 24 : 36);
+        if (visibleTop > navBottom + clearance && visibleBottom < window.innerHeight - 16) return place;
+      }
+      return "dock";
     };
-
-    window.addEventListener("scroll", schedule, { passive: true });
+    const park = () => {
+      if (current === "hidden") return;
+      const dest = target(current);
+      gsap.set(element, { x: dest.x, y: dest.y, width: dest.width });
+    };
+    const animateHero = () => {
+      if (reduced.matches) return;
+      heroEntrance = gsap.timeline({ onComplete: () => {
+        titles.forEach((title) => title.classList.remove("is-typing"));
+        gsap.set(titles.flatMap((title) => Array.from(title.children)), { clearProps: "transform,opacity" });
+      } });
+      // Keep the full word width reserved while letters enter, so the hero never reflows.
+      titles.forEach((title, row) => {
+        const letters = Array.from(title.querySelectorAll<HTMLElement>(".hero-letter"));
+        const rollAt = 0.14 + row * 0.1;
+        heroEntrance!.fromTo(letters[0], {
+          x: -Math.min(460, window.innerWidth * 0.38), rotation: -360, opacity: 1,
+        }, { x: 0, rotation: 0, opacity: 1, immediateRender: false, duration: 0.62, ease: "power2.out" }, rollAt)
+          .to(letters.slice(1), { opacity: 1, duration: 0.01, stagger: 0.065, ease: "none" }, rollAt + 0.64);
+      });
+    };
+    const jump = (next: MascotPlacement, initial = false) => {
+      const wasDocked = current === "dock";
+      flight?.kill();
+      const rect = element.getBoundingClientRect();
+      const dest = target(next);
+      const start = initial
+        ? { x: -dest.width, y: dest.y + 60, width: dest.width * 1.16 }
+        : { x: rect.left, y: rect.top, width: rect.width };
+      current = next;
+      setPlacement(next);
+      element.style.visibility = "visible";
+      element.removeAttribute("inert");
+      gsap.set(body, { scaleX: 1, scaleY: 1, rotation: 0, transformOrigin: "50% 78%" });
+      if (reduced.matches) { park(); return; }
+      progress.value = 0;
+      const launchScroll = window.scrollY;
+      const renderFlight = () => {
+        const landing = target(next);
+        const t = progress.value;
+        const arc = Math.sin(Math.PI * t) * Math.min(initial ? 280 : 150, window.innerHeight * (initial ? 0.34 : 0.18));
+        const width = start.width + (landing.width - start.width) * t;
+        const launchY = start.y - (wasDocked ? 0 : window.scrollY - launchScroll);
+        gsap.set(element, {
+          x: start.x + (landing.x - start.x) * t,
+          y: Math.max((initial ? topbar.getBoundingClientRect().bottom + 16 : 8) - width * 0.21, launchY + (landing.y - launchY) * t - arc),
+          width,
+        });
+      };
+      gsap.set(element, { x: start.x, y: start.y, width: start.width });
+      flight = gsap.timeline({ onComplete: () => { flight = null; park(); schedule(); } })
+        .to(body, { scaleX: 1.18, scaleY: 0.72, duration: 0.14, ease: "power2.in" })
+        .to(body, { scaleX: 0.85, scaleY: 1.2, duration: 0.13, ease: "power2.out" })
+        .to(progress, { value: 1, duration: initial ? 0.9 : 0.64, ease: initial ? "none" : "power1.inOut", onUpdate: renderFlight }, "<")
+        .to(body, { scaleX: 1, scaleY: 1, rotation: wasDocked ? 360 : initial ? -12 : 0,
+          duration: initial ? 0.9 : 0.64, ease: "power1.inOut" }, "<")
+        .set(body, { rotation: wasDocked ? 0 : initial ? -12 : 0 })
+        .to(body, { rotation: 0, scaleX: 1.16, scaleY: 0.8, duration: 0.1, ease: "power2.out" })
+        .to(body, { scaleX: 1, scaleY: 1, duration: 0.26, ease: "back.out(2)" });
+      if (initial) flight.to(body, { rotation: 8, duration: 0.12, yoyo: true, repeat: 3, ease: "sine.inOut" });
+    };
+    const resolve = () => {
+      frame = 0;
+      if (!ready) return;
+      if (!entered) {
+        if (!intent || Math.abs(window.scrollY - baseline) < 2) return;
+        entered = true;
+        jump(choose(), true);
+        return;
+      }
+      const next = choose();
+      if (next !== current) jump(next);
+      else if (!flight) park();
+    };
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(resolve);
+    }
+    const onScroll = () => schedule();
+    const arm = () => { if (ready) intent = true; };
+    const onKey = (event: KeyboardEvent) => {
+      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Home", "End"].includes(event.key)) arm();
+    };
+    const loaderObserver = new MutationObserver(() => {
+      if (!document.querySelector('[aria-label="Loading Webberick"]')) {
+        ready = true;
+        baseline = window.scrollY;
+        intent = false;
+        loaderObserver.disconnect();
+        animateHero();
+      }
+    });
+    if (!ready) loaderObserver.observe(document.body, { childList: true, subtree: true });
+    else animateHero();
+    gsap.set(element, { position: "fixed", left: 0, top: 0, visibility: "hidden" });
+    element.setAttribute("inert", "");
+    window.addEventListener("wheel", arm, { passive: true });
+    window.addEventListener("touchmove", arm, { passive: true });
+    window.addEventListener("pointerdown", arm, { passive: true });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", schedule);
-    resolvePlacement();
-
     return () => {
-      window.removeEventListener("scroll", schedule);
+      loaderObserver.disconnect();
+      cancelAnimationFrame(frame);
+      flight?.kill();
+      heroEntrance?.kill();
+      titles.forEach((title) => title.classList.remove("is-typing"));
+      gsap.set(titles, { clearProps: "opacity" });
+      gsap.set(titles.flatMap((title) => Array.from(title.children)), { clearProps: "transform,opacity" });
+      gsap.killTweensOf([body, element, progress]);
+      window.removeEventListener("wheel", arm);
+      window.removeEventListener("touchmove", arm);
+      window.removeEventListener("pointerdown", arm);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", schedule);
     };
-  }, []);
-
+  }, [mascotRef]);
   return placement;
 }
 
 const Index = () => {
+  const { theme, toggleTheme } = useTheme();
   useHomepageStyles();
   useHomepageMotion();
-  const mascotPlacement = useMascotPlacement();
+  const mascotElementRef = useRef<HTMLElement>(null);
+  const mascotPlacement = useMascotPlacement(mascotElementRef);
 
   const navigate = useNavigate();
   const clickCount = useRef(0);
   const clickResetTimer = useRef<number | null>(null);
+  const previewCloseRef = useRef<HTMLButtonElement>(null);
   const [showAdminEntry, setShowAdminEntry] = useState(false);
+  const [expandedPreview, setExpandedPreview] = useState<{ src: string; title: string } | null>(null);
 
   useEffect(() => () => {
     if (clickResetTimer.current !== null) window.clearTimeout(clickResetTimer.current);
   }, []);
+
+  useEffect(() => {
+    if (!expandedPreview) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpandedPreview(null);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    previewCloseRef.current?.focus();
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [expandedPreview]);
 
   // Preserve the original homepage logo's triple-click admin entry (700ms).
   const handleBrandClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -276,28 +421,28 @@ const Index = () => {
           ? "error"
           : "idle";
 
-  const mascotState: WebberickMascotState = mascotPlacement === "contact" ? contactMascotState : "idle";
+  const mascotState: WebberickMascotState = mascotPlacement === "contact" ? contactMascotState : mascotPlacement === "hero" ? "smile" : "idle";
   const submitLabel = submitState === "submitting" ? "Sending…" : "Send project note";
 
   const mascot = (
-    <WebberickMascot
+    <span ref={mascotElementRef} className={`mascot-flight mascot-flight--${mascotPlacement}`} data-flip-id="webberick-mascot">
+    <span className="mascot-jump-body"><WebberickMascot
       state={mascotState}
       className="mascot-companion"
       interactive
       label="Webberick mascot — click to smile"
-    />
+    /></span>
+    </span>
   );
 
   return (
-    <div className="webberick-home">
+    <div className="webberick-home" data-theme={theme}>
       <header className="topbar" aria-label="Primary navigation">
         <div className="topbar__inner">
           <a className="wordmark" href="#hero" aria-label="Webberick home" onClick={handleBrandClick}>
-            Webberick<span className="cli" aria-hidden="true">_</span>
+            W<span className="cli" aria-hidden="true">_</span>
           </a>
-          <div className="mascot-host mascot-host--dock">
-            {mascotPlacement === "dock" && mascot}
-          </div>
+          <div className="mascot-host mascot-host--dock" aria-hidden="true" />
           <div className="nav-viewport" id="navViewport">
             <nav className="nav-rail" id="navRail" aria-label="Homepage sections">
               <a href="#work" data-nav="work">Work</a>
@@ -306,6 +451,23 @@ const Index = () => {
               <a href="#about" data-nav="about">About</a>
               <a href="#faq" data-nav="faq">FAQ</a>
               <a href="#contact" data-nav="contact">Contact</a>
+              <motion.button
+                type="button"
+                className="theme-toggle"
+                onClick={toggleTheme}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.94 }}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+              >
+                <motion.span
+                  className="theme-toggle__icon"
+                  initial={false}
+                  animate={{ rotate: theme === "dark" ? 0 : 180 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {theme === "dark" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
+                </motion.span>
+              </motion.button>
               <span className="nav-indicator" id="navIndicator" aria-hidden="true" />
             </nav>
           </div>
@@ -321,13 +483,13 @@ const Index = () => {
               ["Motion", "motion"],
             ].map(([label, type]) => (
               <div className="hero-word charge-line" key={label}>
-                <span className={`charge hero-charge charge--${type}`} data-text={label}>{label}</span>
+                <span className={`charge hero-charge charge--${type}`} data-text={label} aria-label={label}>
+                  {Array.from(label).map((letter, index) => <span className="hero-letter" aria-hidden="true" key={index}>{letter}</span>)}
+                </span>
                 <span className="hover-cursor" aria-hidden="true">_</span>
               </div>
             ))}
-            <div className="mascot-host mascot-host--hero">
-              {mascotPlacement === "hero" && mascot}
-            </div>
+            <div className="mascot-host mascot-host--hero" aria-hidden="true" />
           </div>
         </section>
 
@@ -343,6 +505,7 @@ const Index = () => {
                   <a className="project-media" href="https://www.solrasa.com" target="_blank" rel="noreferrer" aria-label="Visit Sol Rasa">
                     <img src="/template-previews/sol-rasa.png" alt="Sol Rasa fashion ecommerce website preview" />
                   </a>
+                  <button className="preview-expand" type="button" onClick={() => setExpandedPreview({ src: "/template-previews/sol-rasa.png", title: "Sol Rasa" })}>Expand preview</button>
                   <div className="project-foot">
                     <div className="charge-line">
                       <h3 className="project-title charge charge--design" data-text="Sol Rasa">Sol Rasa</h3>
@@ -356,6 +519,7 @@ const Index = () => {
                   <div className="project-media" aria-label="Craft Boutique Online preview">
                     <img src="/template-previews/craft-boutique-online.png" alt="Craft Boutique Online ecommerce storefront preview" />
                   </div>
+                  <button className="preview-expand" type="button" onClick={() => setExpandedPreview({ src: "/template-previews/craft-boutique-online.png", title: "Craft Boutique Online" })}>Expand preview</button>
                   <div className="project-foot">
                     <div className="charge-line">
                       <h3 className="project-title charge charge--motion" data-text="Craft Boutique Online">Craft Boutique Online</h3>
@@ -402,9 +566,7 @@ const Index = () => {
             <div className="split__left reveal">
               <p className="label">03 / Why<span className="flow-cursor" aria-hidden="true">_</span></p>
               <h2 className="statement" id="why-title">One process. Start to finish<span className="pulse-dot">.</span></h2>
-              <div className="mascot-host mascot-host--process">
-                {mascotPlacement === "process" && mascot}
-              </div>
+              <div className="mascot-host mascot-host--process" aria-hidden="true" />
             </div>
             <div className="split__right reveal">
               <div className="editorial-rows">
@@ -429,7 +591,10 @@ const Index = () => {
           <div className="shell split">
             <div className="split__left reveal">
               <p className="label">04 / About<span className="flow-cursor" aria-hidden="true">_</span></p>
-              <h2 className="statement" id="about-title">Creative by instinct. Technical by practice<span className="pulse-dot">.</span></h2>
+              <h2 className="statement about-statement" id="about-title">
+                <span className="about-statement__line">Creative by instinct<span className="pulse-dot">.</span></span>{" "}
+                <span className="about-statement__line">Technical by practice<span className="pulse-dot">.</span></span>
+              </h2>
             </div>
             <div className="split__right reveal">
               <div className="about-copy">
@@ -495,9 +660,7 @@ const Index = () => {
                     {submitMessage && <p className={`micro form-status form-status--${submitState}`} role="status" aria-live="polite">{submitMessage}</p>}
                   </div>
                 </form>
-                <div className="mascot-host mascot-host--contact">
-                  {mascotPlacement === "contact" && mascot}
-                </div>
+                <div className="mascot-host mascot-host--contact" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -511,6 +674,13 @@ const Index = () => {
           <span>2026</span>
         </div>
       </footer>
+      <div className="mascot-flight-layer" aria-live="off">{mascot}</div>
+      {expandedPreview && (
+        <div className="preview-lightbox" role="dialog" aria-modal="true" aria-label={`${expandedPreview.title} preview`} onClick={() => setExpandedPreview(null)}>
+          <button ref={previewCloseRef} type="button" className="preview-lightbox__close" aria-label="Close preview" onClick={() => setExpandedPreview(null)}>×</button>
+          <img src={expandedPreview.src} alt={`${expandedPreview.title} full website preview`} onClick={(event) => event.stopPropagation()} />
+        </div>
+      )}
       {showAdminEntry && (
         <AdminEntryAnimation
           onComplete={() => {
