@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Index from "@/pages/Index";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 vi.mock("@/components/home/WebberickMascot", () => ({
   WebberickMascot: () => <div data-testid="mascot" />,
@@ -38,12 +39,12 @@ describe("redesigned homepage admin entry", () => {
     Element.prototype.scrollTo = vi.fn();
 
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <ThemeProvider><MemoryRouter initialEntries={["/"]}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/admin/login" element={<div>Admin login route</div>} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter></ThemeProvider>,
     );
 
     const logo = screen.getByRole("link", { name: "Webberick home" });

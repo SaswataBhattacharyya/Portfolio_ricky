@@ -1,6 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@config "../tailwind.config.ts";
+@source "./";
+
+/* Keep the existing shared component palette and Tailwind 3 visual defaults. */
+@theme {
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --blur-sm: 4px;
+}
+@utility shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+@utility blur { filter: blur(8px); }
+@utility backdrop-blur { backdrop-filter: blur(8px); }
+@utility rounded { border-radius: 0.25rem; }
+@utility outline-none {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+@layer base {
+  button, [role="button"] { cursor: pointer; }
+  input::placeholder, textarea::placeholder { color: #9ca3af; opacity: 1; }
+}
 
 @layer base {
   :root {
@@ -103,53 +123,53 @@
   }
 }
 
+@utility text-gradient {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+}
+
+@utility bg-gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
+}
+
+@utility bg-surface {
+  background: hsl(var(--surface));
+}
+
+@utility bg-surface-elevated {
+  background: hsl(var(--surface-elevated));
+}
+
+@utility glow {
+  box-shadow: 0 0 40px hsl(var(--glow) / 0.3);
+}
+
+@utility glow-sm {
+  box-shadow: 0 0 20px hsl(var(--glow) / 0.2);
+}
+
+@utility border-gradient {
+  border: 1px solid transparent;
+  background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+              linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end))) border-box;
+}
+
+@utility section-padding {
+  @apply px-6 md:px-12 lg:px-24;
+}
+
+@utility glass {
+  @apply backdrop-blur-lg;
+  background: hsl(var(--background) / 0.8);
+}
+
+@utility glass-card {
+  @apply backdrop-blur-md rounded-2xl;
+  background: hsl(var(--card) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
 @layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
-  }
-
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
-  }
-
-  .bg-surface {
-    background: hsl(var(--surface));
-  }
-
-  .bg-surface-elevated {
-    background: hsl(var(--surface-elevated));
-  }
-
-  .glow {
-    box-shadow: 0 0 40px hsl(var(--glow) / 0.3);
-  }
-
-  .glow-sm {
-    box-shadow: 0 0 20px hsl(var(--glow) / 0.2);
-  }
-
-  .border-gradient {
-    border: 1px solid transparent;
-    background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-                linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end))) border-box;
-  }
-
-  .section-padding {
-    @apply px-6 md:px-12 lg:px-24;
-  }
-
-  .glass {
-    @apply backdrop-blur-lg;
-    background: hsl(var(--background) / 0.8);
-  }
-
-  .glass-card {
-    @apply backdrop-blur-md rounded-2xl;
-    background: hsl(var(--card) / 0.6);
-    border: 1px solid hsl(var(--border) / 0.5);
-  }
-
   /* Brand cursor underscore (blink is JS-driven in the intro; this CSS
      animation powers the continuous navbar blink). */
   .brand-cursor {

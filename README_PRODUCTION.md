@@ -6,35 +6,43 @@ application updates. `setup-dev.sh` is local-only and keeps the existing Vite po
 The root application is the only project deployed. `solrasa_v1/` and `craft-boutique-online/`
 remain separate nested projects and are not executed by the production scripts.
 
-## October 2026 dependency audit failure
+## October 2026 dependency repair
 
-The deployment shown at commit `b5b2bb8` stopped at `npm audit --audit-level=low`.
-Because the script uses `set -e`, it did not reach the frontend build, www sync,
-migrations, portfolio import, or service restart. It did already copy source into
-`/srv/webberick/app` and run dependency installation; that directory is not an
-atomic release. The log alone does not establish the running backend's health.
+The deployment logs at `b5b2bb8` and `73ddc5a` stopped at the npm audit gate.
+The fix on `feat/webberick-redesign` removes unused Firebase (previous patch),
+`@tailwindcss/typography`, and `lovable-tagger`, then migrates Tailwind 3 to 4
+with `@tailwindcss/postcss`. Autoprefixer is superseded by that integration.
+`tailwind-merge` is updated for Tailwind 4; the existing animation plugin,
+HSL palette, radii, and keyframes are retained. Shared compatibility CSS preserves
+older shadows, blur, placeholders, and focus outlines. No force or overrides are used.
 
-The dependency patch removes Firebase (no application imports) and applies
-compatible npm updates without `--force`. The audit fell from 22 findings to 10
-(5 high, 5 moderate). The production build still emits the same assets:
-`index-BQ9RomGk.css` and `index-Dyv1zIkj.js`.
+### Exact original dependency paths
 
-Remaining findings originate in `braces` and `postcss-selector-parser` through
-Tailwind and related packages. `braces` has no published patched version:
-https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
-The selector parser has a patch at 7.1.6, outside the installed v6 dependency
-ranges: https://github.com/advisories/GHSA-rj75-hqrm-r3gf
-Do not use `npm audit fix --force`, replace packages with incompatible overrides,
-or bypass the deployment audit to make this patch deploy. The full audit still
-fails. Removing the remaining dependency paths requires a separately validated
-build-tool migration or a documented risk acceptance; neither is part of this
-patch. `npm audit --omit=dev` also still reports findings because npm includes
-build-tool peer dependencies; it is not a clean substitute for the current gate.
+- Tailwind 3 → chokidar → braces 3.0.3.
+- Tailwind 3 → fast-glob → micromatch → braces 3.0.3.
+- Tailwind 3 → micromatch → braces 3.0.3.
+- Tailwind 3 → postcss-selector-parser 6.1.4.
+- Tailwind 3 → postcss-nested → postcss-selector-parser 6.1.4.
+- Unused typography plugin → postcss-selector-parser 6.0.10.
+- Unused lovable-tagger and tailwindcss-animate retained Tailwind 3 through their dependencies/peers.
 
-### Server: validate in a separate checkout first
+The repaired root tree has Tailwind 4.3.3 and neither vulnerable package.
+`npm ci`, `npm audit --audit-level=low`, and the production build pass locally;
+the audit reports **0 vulnerabilities**. All four existing tests pass, including
+three-click admin navigation. The homepage test now mounts its required theme
+provider, and jest-dom imports its Vitest integration. The build retains its
+large JavaScript chunk warning. Existing unrelated lint errors in AdminHub and
+UI type declarations are outside this dependency repair.
 
-After the reviewed dependency patch has been committed and pushed to
-`feat/webberick-redesign`, run these commands as `ubuntu`, without sudo:
+### Compatibility and server validation
+
+Use Node 22 LTS at 22.12 or newer, or Node 24 (checked with Node 22.23.1). There is no need to
+upgrade npm to resolve these findings. Tailwind 4 requires Safari 16.4+, Chrome
+111+, and Firefox 128+; see https://tailwindcss.com/docs/compatibility .
+Older browser support is the main compatibility change.
+
+After this patch is committed and pushed to `feat/webberick-redesign`, validate
+in a disposable checkout on the server as `ubuntu`, without sudo:
 
 ```bash
 cd ~/Portfolio_ricky
@@ -42,32 +50,14 @@ git fetch origin
 review_dir=$(mktemp -d /tmp/webberick-dependency-review.XXXXXX)
 git archive origin/feat/webberick-redesign | tar -x -C "$review_dir"
 cd "$review_dir"
+node --version
 npm ci --no-fund
-npm run build
 npm audit --audit-level=low
+npm run build
+npm test
 ```
 
-These commands do not write into `/srv/webberick`, run Django commands, restart
-services, or publish a frontend. Until the remaining findings are resolved, the
-last command is expected to fail. No database, Django, nginx, credentials, or API
-URL changes are required for the dependency patch.
-
-Once the full audit passes and UI compatibility is checked, the existing deploy
-command can be used. Back up the current frontend as well as database/media first:
-
-```bash
-cd ~/Portfolio_ricky
-./backup-production.sh
-frontend_backup="/srv/webberick/backups/frontend-$(date -u +%Y%m%d-%H%M%S).tar.gz"
-sudo tar -czf "$frontend_backup" -C /srv/webberick/www .
-sudo chmod 600 "$frontend_backup"
-printf 'Frontend backup: %s\n' "$frontend_backup"
-./deploy-production.sh
-```
-
-The standard deploy script performs migrations and restarts the backend as usual;
-the dependency patch does not add any migrations. If only the frontend needs
-rollback, restore the recorded frontend backup into `/srv/webberick/www` using
-`sudo tar -xzf "$frontend_backup" -C /srv/webberick/www`. This restores the old
-index and its matching assets without changing the database. Backend rollback is
-a separate operation; do not restore the database for an npm audit failure.
+These commands do not publish assets, run Django commands, or restart services.
+The dependency repair requires no Django, database, authentication, nginx, API
+URL, environment variable, or migration changes. No deployment or merge into
+main was performed. Keep the existing deployment audit gate enabled.
