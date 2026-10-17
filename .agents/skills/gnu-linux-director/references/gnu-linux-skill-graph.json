@@ -1,0 +1,661 @@
+{
+  "version": 1,
+  "entrypoint": "gnu-linux-director",
+  "scope": "global Codex skills, workstation opt-in",
+  "description": "50 Linux/GNU system skills plus one GNU/Linux Director, optional read-only local Linux MCP",
+  "sources": [
+    {
+      "repo": "peterbamuhigire/linux-skills",
+      "skills": [
+        {
+          "name": "linux-cloud-init",
+          "path": "01-provisioning-and-bootstrap/linux-cloud-init"
+        },
+        {
+          "name": "linux-config-management",
+          "path": "01-provisioning-and-bootstrap/linux-config-management"
+        },
+        {
+          "name": "linux-package-management",
+          "path": "01-provisioning-and-bootstrap/linux-package-management"
+        },
+        {
+          "name": "linux-server-provisioning",
+          "path": "01-provisioning-and-bootstrap/linux-server-provisioning"
+        },
+        {
+          "name": "linux-access-control",
+          "path": "02-users-access-and-secrets/linux-access-control"
+        },
+        {
+          "name": "linux-secrets",
+          "path": "02-users-access-and-secrets/linux-secrets"
+        },
+        {
+          "name": "linux-dns-server",
+          "path": "03-networking-and-dns/linux-dns-server"
+        },
+        {
+          "name": "linux-network-admin",
+          "path": "03-networking-and-dns/linux-network-admin"
+        },
+        {
+          "name": "linux-mail-server",
+          "path": "04-web-and-mail-services/linux-mail-server"
+        },
+        {
+          "name": "linux-site-deployment",
+          "path": "04-web-and-mail-services/linux-site-deployment"
+        },
+        {
+          "name": "linux-webstack",
+          "path": "04-web-and-mail-services/linux-webstack"
+        },
+        {
+          "name": "linux-service-management",
+          "path": "05-services-and-virtualization/linux-service-management"
+        },
+        {
+          "name": "linux-virtualization",
+          "path": "05-services-and-virtualization/linux-virtualization"
+        },
+        {
+          "name": "linux-disk-storage",
+          "path": "06-storage-and-filesystems/linux-disk-storage"
+        },
+        {
+          "name": "linux-firewall-ssl",
+          "path": "07-security-and-hardening/linux-firewall-ssl"
+        },
+        {
+          "name": "linux-intrusion-detection",
+          "path": "07-security-and-hardening/linux-intrusion-detection"
+        },
+        {
+          "name": "linux-ngo-cyber-resilience",
+          "path": "07-security-and-hardening/linux-ngo-cyber-resilience"
+        },
+        {
+          "name": "linux-security-analysis",
+          "path": "07-security-and-hardening/linux-security-analysis"
+        },
+        {
+          "name": "linux-server-hardening",
+          "path": "07-security-and-hardening/linux-server-hardening"
+        },
+        {
+          "name": "linux-log-management",
+          "path": "08-observability-and-logging/linux-log-management"
+        },
+        {
+          "name": "linux-observability",
+          "path": "08-observability-and-logging/linux-observability"
+        },
+        {
+          "name": "linux-system-monitoring",
+          "path": "08-observability-and-logging/linux-system-monitoring"
+        },
+        {
+          "name": "linux-disaster-recovery",
+          "path": "09-troubleshooting-and-recovery/linux-disaster-recovery"
+        },
+        {
+          "name": "linux-troubleshooting",
+          "path": "09-troubleshooting-and-recovery/linux-troubleshooting"
+        },
+        {
+          "name": "linux-bash-scripting",
+          "path": "10-automation-and-scripting/linux-bash-scripting"
+        },
+        {
+          "name": "linux-repo-sync",
+          "path": "10-automation-and-scripting/linux-repo-sync"
+        },
+        {
+          "name": "linux-inmemory-stores",
+          "path": "11-databases-and-caching/linux-inmemory-stores"
+        },
+        {
+          "name": "linux-mysql-mariadb",
+          "path": "11-databases-and-caching/linux-mysql-mariadb"
+        },
+        {
+          "name": "linux-postgresql",
+          "path": "11-databases-and-caching/linux-postgresql"
+        },
+        {
+          "name": "linux-container-deployment",
+          "path": "12-containers-and-orchestration/linux-container-deployment"
+        },
+        {
+          "name": "linux-container-engine",
+          "path": "12-containers-and-orchestration/linux-container-engine"
+        },
+        {
+          "name": "linux-image-hygiene",
+          "path": "12-containers-and-orchestration/linux-image-hygiene"
+        },
+        {
+          "name": "linux-archive-integrity",
+          "path": "13-backup-and-archiving/linux-archive-integrity"
+        },
+        {
+          "name": "linux-filesystem-snapshots",
+          "path": "13-backup-and-archiving/linux-filesystem-snapshots"
+        },
+        {
+          "name": "linux-rsync-sync",
+          "path": "13-backup-and-archiving/linux-rsync-sync"
+        },
+        {
+          "name": "linux-kernel-modules",
+          "path": "14-performance-and-kernel/linux-kernel-modules"
+        },
+        {
+          "name": "linux-perf-profiling",
+          "path": "14-performance-and-kernel/linux-perf-profiling"
+        },
+        {
+          "name": "linux-sysctl-tuning",
+          "path": "14-performance-and-kernel/linux-sysctl-tuning"
+        },
+        {
+          "name": "linux-auditd-rules",
+          "path": "15-compliance-and-auditing/linux-auditd-rules"
+        },
+        {
+          "name": "linux-benchmark-scanning",
+          "path": "15-compliance-and-auditing/linux-benchmark-scanning"
+        },
+        {
+          "name": "linux-file-integrity",
+          "path": "15-compliance-and-auditing/linux-file-integrity"
+        },
+        {
+          "name": "linux-sysadmin",
+          "path": "linux-sysadmin"
+        }
+      ]
+    },
+    {
+      "repo": "HermeticOrmus/linux-sysadmin-skills",
+      "skills": [
+        {
+          "name": "sysadmin-diagnose",
+          "path": "skills/sysadmin-diagnose"
+        },
+        {
+          "name": "sysadmin-maintain",
+          "path": "skills/sysadmin-maintain"
+        },
+        {
+          "name": "sysadmin-monitor",
+          "path": "skills/sysadmin-monitor"
+        },
+        {
+          "name": "sysadmin-performance",
+          "path": "skills/sysadmin-performance"
+        },
+        {
+          "name": "sysadmin-security",
+          "path": "skills/sysadmin-security"
+        }
+      ]
+    },
+    {
+      "repo": "wshobson/agents",
+      "skills": [
+        {
+          "name": "bash-defensive-patterns",
+          "path": "plugins/shell-scripting/skills/bash-defensive-patterns"
+        },
+        {
+          "name": "bats-testing-patterns",
+          "path": "plugins/shell-scripting/skills/bats-testing-patterns"
+        },
+        {
+          "name": "shellcheck-configuration",
+          "path": "plugins/shell-scripting/skills/shellcheck-configuration"
+        }
+      ]
+    }
+  ],
+  "mcp": {
+    "name": "linux-mcp",
+    "repo": "Mohabdo21/linux-mcp",
+    "required": false,
+    "kind": "local stdio diagnostic only; does not enable mutation"
+  },
+  "routes": [
+    {
+      "id": "bash-gnu-tools",
+      "lead": "bash-defensive-patterns",
+      "steps": [
+        "linux-bash-scripting",
+        "shellcheck-configuration",
+        "bats-testing-patterns"
+      ],
+      "keywords": [
+        "bash",
+        "shell",
+        "sed",
+        "awk",
+        "grep",
+        "find",
+        "sort",
+        "cut",
+        "xargs",
+        "coreutils",
+        "script",
+        "pipe",
+        "gnu",
+        "shellcheck",
+        "bats"
+      ],
+      "description": "Portable scripts and one-off GNU command utilities"
+    },
+    {
+      "id": "unknown-incident",
+      "lead": "linux-troubleshooting",
+      "steps": [
+        "sysadmin-diagnose",
+        "linux-system-monitoring",
+        "linux-log-management"
+      ],
+      "keywords": [
+        "not working",
+        "broken",
+        "down",
+        "failure",
+        "error",
+        "crash",
+        "502",
+        "503",
+        "why",
+        "diagnose",
+        "troubleshoot",
+        "fix"
+      ],
+      "description": "Unexplained failure diagnosis"
+    },
+    {
+      "id": "host-admin",
+      "lead": "linux-sysadmin",
+      "steps": [
+        "linux-system-monitoring",
+        "sysadmin-monitor"
+      ],
+      "keywords": [
+        "linux",
+        "ubuntu",
+        "debian",
+        "fedora",
+        "rhel",
+        "server",
+        "vps",
+        "workstation",
+        "ec2",
+        "sysadmin",
+        "admin"
+      ],
+      "description": "General Linux administration"
+    },
+    {
+      "id": "packages",
+      "lead": "linux-package-management",
+      "steps": [
+        "sysadmin-maintain"
+      ],
+      "keywords": [
+        "apt",
+        "dnf",
+        "package",
+        "ppa",
+        "repository",
+        "upgrade",
+        "update",
+        "install",
+        "dependency",
+        "uninstall"
+      ],
+      "description": "Package maintenance and availability"
+    },
+    {
+      "id": "services",
+      "lead": "linux-service-management",
+      "steps": [
+        "linux-log-management",
+        "sysadmin-diagnose"
+      ],
+      "keywords": [
+        "systemd",
+        "systemctl",
+        "service",
+        "journalctl",
+        "unit",
+        "daemon",
+        "timer",
+        "restart",
+        "start service"
+      ],
+      "description": "Services and processes"
+    },
+    {
+      "id": "network",
+      "lead": "linux-network-admin",
+      "steps": [
+        "linux-firewall-ssl",
+        "linux-access-control"
+      ],
+      "keywords": [
+        "network",
+        "ssh",
+        "dns",
+        "firewall",
+        "ufw",
+        "ip address",
+        "port",
+        "routing",
+        "tls",
+        "certificate",
+        "nginx ssl"
+      ],
+      "description": "Networking, SSH, firewall and TLS"
+    },
+    {
+      "id": "web-ops",
+      "lead": "linux-webstack",
+      "steps": [
+        "linux-site-deployment",
+        "linux-service-management",
+        "linux-log-management"
+      ],
+      "keywords": [
+        "nginx",
+        "apache",
+        "website",
+        "webserver",
+        "web server",
+        "reverse proxy",
+        "502",
+        "502 bad gateway",
+        "site",
+        "deploy",
+        "hosting"
+      ],
+      "description": "Web stack administration and deployments"
+    },
+    {
+      "id": "security-audit",
+      "lead": "linux-security-analysis",
+      "steps": [
+        "sysadmin-security",
+        "linux-server-hardening"
+      ],
+      "keywords": [
+        "security",
+        "harden",
+        "audit",
+        "permissions",
+        "chmod",
+        "sudo",
+        "access control",
+        "vulnerability",
+        "fail2ban",
+        "selinux",
+        "apparmor"
+      ],
+      "description": "Security observations first; authorized changes separately"
+    },
+    {
+      "id": "performance",
+      "lead": "linux-perf-profiling",
+      "steps": [
+        "linux-system-monitoring",
+        "sysadmin-performance",
+        "linux-sysctl-tuning"
+      ],
+      "keywords": [
+        "slow",
+        "cpu",
+        "ram",
+        "memory",
+        "performance",
+        "load",
+        "iowait",
+        "bottleneck",
+        "lag",
+        "latency",
+        "high usage"
+      ],
+      "description": "Profile system bottlenecks before tuning"
+    },
+    {
+      "id": "disk-storage",
+      "lead": "linux-disk-storage",
+      "steps": [
+        "linux-filesystem-snapshots",
+        "linux-archive-integrity"
+      ],
+      "keywords": [
+        "disk",
+        "storage",
+        "mount",
+        "full",
+        "space",
+        "filesystem",
+        "inode",
+        "partition",
+        "nvme",
+        "resize"
+      ],
+      "description": "Disk, filesystems, partition and capacity"
+    },
+    {
+      "id": "backups",
+      "lead": "linux-rsync-sync",
+      "steps": [
+        "linux-archive-integrity",
+        "linux-disaster-recovery"
+      ],
+      "keywords": [
+        "backup",
+        "restore",
+        "rsync",
+        "tar",
+        "archive",
+        "snapshot",
+        "sync files",
+        "recovery"
+      ],
+      "description": "Backups, verification and recovery"
+    },
+    {
+      "id": "containers",
+      "lead": "linux-container-engine",
+      "steps": [
+        "linux-container-deployment",
+        "linux-image-hygiene"
+      ],
+      "keywords": [
+        "docker",
+        "container",
+        "podman",
+        "compose",
+        "kubernetes",
+        "image",
+        "registry"
+      ],
+      "description": "Container operation and image hygiene"
+    },
+    {
+      "id": "database",
+      "lead": "linux-postgresql",
+      "steps": [
+        "linux-mysql-mariadb",
+        "linux-inmemory-stores"
+      ],
+      "keywords": [
+        "postgres",
+        "postgresql",
+        "mysql",
+        "mariadb",
+        "redis",
+        "database",
+        "db server"
+      ],
+      "description": "Select the actual database provider; never run irrelevant skill"
+    },
+    {
+      "id": "monitoring",
+      "lead": "linux-observability",
+      "steps": [
+        "linux-log-management",
+        "sysadmin-monitor",
+        "linux-system-monitoring"
+      ],
+      "keywords": [
+        "monitor",
+        "metrics",
+        "logs",
+        "alert",
+        "prometheus",
+        "grafana",
+        "observability",
+        "monitoring"
+      ],
+      "description": "Observability and logging"
+    },
+    {
+      "id": "maintenance",
+      "lead": "sysadmin-maintain",
+      "steps": [
+        "linux-package-management",
+        "linux-system-monitoring"
+      ],
+      "keywords": [
+        "cleanup",
+        "maintenance",
+        "keep clean",
+        "maintain",
+        "update server",
+        "upgrade packages"
+      ],
+      "description": "Explicitly authorized routine system maintenance"
+    },
+    {
+      "id": "cloud-infra",
+      "lead": "linux-server-provisioning",
+      "steps": [
+        "linux-cloud-init",
+        "linux-config-management"
+      ],
+      "keywords": [
+        "provision",
+        "cloud-init",
+        "bootstrap",
+        "vm",
+        "virtual machine",
+        "infrastructure",
+        "cloud server"
+      ],
+      "description": "Provisioning and config management"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "gnu-linux-director",
+      "to": "linux-sysadmin",
+      "type": "general-hub"
+    },
+    {
+      "from": "gnu-linux-director",
+      "to": "linux-troubleshooting",
+      "type": "diagnostic-lead"
+    },
+    {
+      "from": "gnu-linux-director",
+      "to": "bash-defensive-patterns",
+      "type": "GNU-cli-lead"
+    },
+    {
+      "from": "gnu-linux-director",
+      "to": "linux-mcp",
+      "type": "optional-readonly-system-data"
+    },
+    {
+      "from": "linux-troubleshooting",
+      "to": "linux-log-management",
+      "type": "log-evidence"
+    },
+    {
+      "from": "linux-troubleshooting",
+      "to": "linux-system-monitoring",
+      "type": "resource-evidence"
+    },
+    {
+      "from": "linux-webstack",
+      "to": "linux-service-management",
+      "type": "service-diagnostics"
+    },
+    {
+      "from": "linux-webstack",
+      "to": "linux-log-management",
+      "type": "incident-evidence"
+    },
+    {
+      "from": "linux-site-deployment",
+      "to": "linux-firewall-ssl",
+      "type": "network-gate"
+    },
+    {
+      "from": "linux-security-analysis",
+      "to": "linux-server-hardening",
+      "type": "only-after-approval"
+    },
+    {
+      "from": "linux-bash-scripting",
+      "to": "shellcheck-configuration",
+      "type": "static-validation"
+    },
+    {
+      "from": "bash-defensive-patterns",
+      "to": "bats-testing-patterns",
+      "type": "test-validation"
+    },
+    {
+      "from": "linux-disk-storage",
+      "to": "linux-filesystem-snapshots",
+      "type": "backup-before-change"
+    },
+    {
+      "from": "linux-rsync-sync",
+      "to": "linux-archive-integrity",
+      "type": "backup-integrity"
+    },
+    {
+      "from": "linux-perf-profiling",
+      "to": "linux-sysctl-tuning",
+      "type": "explicit-approval"
+    },
+    {
+      "from": "linux-container-engine",
+      "to": "linux-image-hygiene",
+      "type": "image-audit"
+    },
+    {
+      "from": "linux-package-management",
+      "to": "sysadmin-maintain",
+      "type": "approved-maintenance"
+    }
+  ],
+  "policy": {
+    "one_lead": true,
+    "default_mode": "read-only",
+    "explicit_host_authorization": true,
+    "production_change_requires_permission": true,
+    "destructive_actions_require_separate_confirmation": true,
+    "verify_before_claiming_success": true,
+    "trust_external_scripts": false
+  }
+}

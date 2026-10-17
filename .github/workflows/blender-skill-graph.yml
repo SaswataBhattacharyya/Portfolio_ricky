@@ -1,0 +1,30 @@
+name: Blender and GNU/Linux Skill Graph Validation
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - '.agents/skills/**'
+      - 'scripts/*skill*'
+      - 'docs/*SKILL*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python routing tests
+        run: |
+          python3 scripts/test_blender_skill_graph.py
+          python3 scripts/test_gnu_linux_skill_graph.py
+      - name: Generate full graphs
+        run: |
+          python3 scripts/blender_skill_graph.py --graph > /tmp/webberick-blender-skill-graph.md
+          python3 scripts/gnu_linux_skill_graph.py --graph > /tmp/gnu-linux-skill-graph.md
+      - name: Check Bash install scripts
+        run: |
+          bash -n scripts/install-blender-skill-stack.sh
+          bash -n scripts/install-gnu-linux-skill-stack.sh
