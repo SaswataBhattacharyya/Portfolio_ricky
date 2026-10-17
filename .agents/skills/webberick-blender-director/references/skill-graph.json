@@ -1,0 +1,417 @@
+{
+  "version": 1,
+  "purpose": "Explicit routing and inventory; Graphify is optional analysis, not live skill routing.",
+  "mcp": {
+    "name": "blender-mcp",
+    "repo": "ahujasid/mcp-for-blender",
+    "installation": "reuse existing MCP, do not install as a skill"
+  },
+  "entrypoint": "webberick-blender-director",
+  "sources": [
+    {
+      "repo": "scenario-labs/skills",
+      "skill_count": 13,
+      "skills": [
+        "scenario-blender-expert",
+        "scenario-blender-animation",
+        "scenario-blender-geometry-nodes",
+        "scenario-blender-grease-pencil",
+        "scenario-blender-hair",
+        "scenario-blender-hard-surface",
+        "scenario-blender-lighting-rendering",
+        "scenario-blender-previs-storyboard",
+        "scenario-blender-retopology",
+        "scenario-blender-rigging",
+        "scenario-blender-sculpting",
+        "scenario-blender-texturing-shading",
+        "scenario-blender-uv-baking"
+      ]
+    },
+    {
+      "repo": "CheshireJCat/create-3d-model-skill",
+      "skill_count": 1,
+      "skills": [
+        "create-3d-model"
+      ]
+    },
+    {
+      "repo": "RobLe3/cc-blender-skill",
+      "skill_count": 30,
+      "skills": [
+        "animation-quality-gate",
+        "atlas-uv-fitting",
+        "blender-animation",
+        "blender-cameras",
+        "blender-export",
+        "blender-lighting",
+        "blender-materials",
+        "blender-modeling",
+        "blender-pro-workflow",
+        "blender-rendering",
+        "blender-skill-harmonizer",
+        "blender-uv-texturing",
+        "closed-surface-uv-coverage",
+        "contour-to-mesh",
+        "fit-repair-optimizer",
+        "landmark-fit-repair",
+        "mascot-logo-reconstruction",
+        "multiview-constraint-solver",
+        "multiview-fit-loop",
+        "orbital-hud-motion",
+        "orthographic-registration",
+        "quality-refinement-autoloop",
+        "reference-analysis-validator",
+        "reference-look-calibration",
+        "reference-to-3d",
+        "source-part-segmentation",
+        "text-to-blender",
+        "texture-driven-mesh-fitting",
+        "texture-state-animation",
+        "wireframe-to-3d"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "id": "reference",
+      "description": "Match a supplied image, drawing, existing object, or brand/logo",
+      "keywords": [
+        "reference",
+        "screenshot",
+        "image",
+        "photo",
+        "wireframe",
+        "orthographic",
+        "match this",
+        "like this",
+        "recreate",
+        "replicate",
+        "logo",
+        "atlas",
+        "mascot"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "blender-skill-harmonizer",
+        "reference-analysis-validator",
+        "orthographic-registration",
+        "reference-to-3d",
+        "multiview-fit-loop",
+        "reference-look-calibration",
+        "blender-export"
+      ],
+      "priority": 9
+    },
+    {
+      "id": "hard-surface",
+      "description": "Mechanical, device, gadget, or product asset",
+      "keywords": [
+        "robot",
+        "mechanical",
+        "gadget",
+        "device",
+        "computer",
+        "helmet",
+        "sci-fi",
+        "scifi",
+        "hard surface",
+        "machined",
+        "weapon",
+        "metal object",
+        "product"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "scenario-blender-expert",
+        "scenario-blender-hard-surface",
+        "scenario-blender-retopology",
+        "scenario-blender-texturing-shading",
+        "scenario-blender-lighting-rendering",
+        "blender-export"
+      ],
+      "priority": 6
+    },
+    {
+      "id": "procedural",
+      "description": "Abstract effects, particle instancing and generative shapes",
+      "keywords": [
+        "abstract",
+        "procedural",
+        "nodes",
+        "particles",
+        "scatter",
+        "generative",
+        "swarm",
+        "geometry nodes",
+        "field",
+        "repeating",
+        "pattern",
+        "tunnel"
+      ],
+      "lead": "scenario-blender-expert",
+      "steps": [
+        "scenario-blender-geometry-nodes",
+        "scenario-blender-texturing-shading",
+        "scenario-blender-lighting-rendering",
+        "blender-export"
+      ],
+      "priority": 8
+    },
+    {
+      "id": "organic",
+      "description": "Creature, character and sculptural organic form",
+      "keywords": [
+        "face",
+        "creature",
+        "character",
+        "organic",
+        "sculpt",
+        "head",
+        "statue",
+        "human",
+        "animal",
+        "hair"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "scenario-blender-expert",
+        "scenario-blender-sculpting",
+        "scenario-blender-retopology",
+        "scenario-blender-uv-baking",
+        "scenario-blender-texturing-shading",
+        "blender-export"
+      ],
+      "priority": 6
+    },
+    {
+      "id": "motion",
+      "description": "Object movement, camera animation and motion effects",
+      "keywords": [
+        "animate",
+        "animation",
+        "spin",
+        "rotate",
+        "orbit",
+        "move",
+        "motion",
+        "rig",
+        "keyframe",
+        "loop",
+        "transition",
+        "reveal"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "scenario-blender-animation",
+        "blender-cameras",
+        "animation-quality-gate",
+        "blender-export"
+      ],
+      "priority": 5
+    },
+    {
+      "id": "lookdev",
+      "description": "Materials, mood, lighting, texture, rendering",
+      "keywords": [
+        "glass",
+        "neon",
+        "chrome",
+        "metallic",
+        "material",
+        "texture",
+        "lighting",
+        "render",
+        "gold",
+        "lighting",
+        "glow",
+        "reflection",
+        "cinematic",
+        "premium"
+      ],
+      "lead": "scenario-blender-expert",
+      "steps": [
+        "scenario-blender-texturing-shading",
+        "scenario-blender-lighting-rendering",
+        "blender-rendering"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "repair",
+      "description": "Wrong shape, broken normals, failed exports, visual rejection",
+      "keywords": [
+        "fix",
+        "broken",
+        "wrong",
+        "bad",
+        "ugly",
+        "chunky",
+        "too big",
+        "inaccurate",
+        "refine",
+        "repair",
+        "artifact",
+        "fidelity",
+        "normals",
+        "uv problem",
+        "doesn't look"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "blender-skill-harmonizer",
+        "quality-refinement-autoloop",
+        "fit-repair-optimizer",
+        "scenario-blender-retopology",
+        "multiview-fit-loop"
+      ],
+      "priority": 10
+    },
+    {
+      "id": "web-asset",
+      "description": "Browser-bound GLB export and optimization",
+      "keywords": [
+        "website",
+        "web",
+        "homepage",
+        "portfolio",
+        "r3f",
+        "react three",
+        "three.js",
+        "glb",
+        "gltf",
+        "mobile",
+        "optimize",
+        "performance",
+        "export"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "blender-export",
+        "scenario-blender-uv-baking",
+        "scenario-blender-retopology"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "scene",
+      "description": "Complete 3D environment or staged scene",
+      "keywords": [
+        "scene",
+        "room",
+        "environment",
+        "landscape",
+        "studio",
+        "composition",
+        "set",
+        "world"
+      ],
+      "lead": "create-3d-model",
+      "steps": [
+        "blender-pro-workflow",
+        "scenario-blender-hard-surface",
+        "blender-materials",
+        "blender-lighting",
+        "blender-cameras",
+        "blender-rendering",
+        "blender-export"
+      ],
+      "priority": 4
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "webberick-blender-director",
+      "to": "scenario-blender-expert",
+      "type": "specialist-backbone"
+    },
+    {
+      "from": "webberick-blender-director",
+      "to": "create-3d-model",
+      "type": "default-lead"
+    },
+    {
+      "from": "webberick-blender-director",
+      "to": "blender-skill-harmonizer",
+      "type": "conflict-resolution"
+    },
+    {
+      "from": "webberick-blender-director",
+      "to": "blender-mcp",
+      "type": "execution-backend"
+    },
+    {
+      "from": "create-3d-model",
+      "to": "blender-skill-harmonizer",
+      "type": "optional-reference-specialist"
+    },
+    {
+      "from": "blender-skill-harmonizer",
+      "to": "reference-analysis-validator",
+      "type": "source-manifest-before-modeling"
+    },
+    {
+      "from": "reference-analysis-validator",
+      "to": "orthographic-registration",
+      "type": "multi-view-gate"
+    },
+    {
+      "from": "orthographic-registration",
+      "to": "reference-to-3d",
+      "type": "reconstruction"
+    },
+    {
+      "from": "reference-to-3d",
+      "to": "multiview-fit-loop",
+      "type": "validate"
+    },
+    {
+      "from": "multiview-fit-loop",
+      "to": "blender-export",
+      "type": "export-after-validation"
+    },
+    {
+      "from": "scenario-blender-hard-surface",
+      "to": "scenario-blender-retopology",
+      "type": "cleanup"
+    },
+    {
+      "from": "scenario-blender-sculpting",
+      "to": "scenario-blender-retopology",
+      "type": "cleanup"
+    },
+    {
+      "from": "scenario-blender-retopology",
+      "to": "scenario-blender-uv-baking",
+      "type": "unwrap-bake"
+    },
+    {
+      "from": "scenario-blender-uv-baking",
+      "to": "scenario-blender-texturing-shading",
+      "type": "lookdev"
+    },
+    {
+      "from": "scenario-blender-texturing-shading",
+      "to": "scenario-blender-lighting-rendering",
+      "type": "lighting"
+    },
+    {
+      "from": "scenario-blender-animation",
+      "to": "animation-quality-gate",
+      "type": "frame-validation"
+    },
+    {
+      "from": "quality-refinement-autoloop",
+      "to": "fit-repair-optimizer",
+      "type": "diagnosis-first"
+    }
+  ],
+  "policy": {
+    "single_lead": true,
+    "inspect_scene_first": true,
+    "preserve_existing_scene": true,
+    "visual_validation_required": true,
+    "reference_matching_priority": true,
+    "web_delivery_default": ".glb + versioned .blend",
+    "no_automatic_backend_changes": true
+  }
+}
