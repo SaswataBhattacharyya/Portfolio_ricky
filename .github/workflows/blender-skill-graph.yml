@@ -1,0 +1,23 @@
+name: Blender Skill Graph Validation
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - '.agents/skills/webberick-blender-director/**'
+      - 'scripts/blender_skill_graph.py'
+      - 'scripts/test_blender_skill_graph.py'
+      - 'docs/BLENDER_SKILL_GRAPH.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python routing tests
+        run: python3 scripts/test_blender_skill_graph.py
+      - name: Generate full graph
+        run: python3 scripts/blender_skill_graph.py --graph > /tmp/webberick-blender-skill-graph.md
